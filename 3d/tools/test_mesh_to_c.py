@@ -101,6 +101,53 @@ class MeshToCTest(unittest.TestCase):
         np.testing.assert_allclose(converted.vertices[2], [0.0, 0.0, -2.0])
         np.testing.assert_allclose(converted.source_origin, [10.0, 20.0, 30.0])
 
+    def test_simplification_reduces_faces_and_rebuilds_normals(self) -> None:
+        sphere = trimesh.creation.icosphere(subdivisions=3)
+        source = SourceMesh(
+            path=Path("sphere.obj"),
+            vertices=np.asarray(sphere.vertices, dtype=np.float64),
+            faces=np.asarray(sphere.faces, dtype=np.int64),
+        )
+        converted = convert_mesh(
+            source,
+            ConversionOptions(
+                symbol="sphere",
+                simplify_ratio=0.75,
+                include_vertex_normals=True,
+            ),
+        )
+
+        self.assertEqual(len(converted.faces), 320)
+        self.assertEqual(converted.simplified_faces_removed, 960)
+        self.assertLess(len(converted.vertices), len(source.vertices))
+        self.assertLess(int(converted.faces.max()), len(converted.vertices))
+        np.testing.assert_allclose(
+            np.linalg.norm(converted.face_normals, axis=1),
+            np.ones(len(converted.faces)),
+            atol=1e-12,
+        )
+        np.testing.assert_allclose(
+            np.linalg.norm(converted.vertex_normals, axis=1),
+            np.ones(len(converted.vertex_normals)),
+            atol=1e-12,
+        )
+        self.assertAlmostEqual(float(converted.extents.max()), 2.0, places=7)
+
+    def test_simplification_rate_validation(self) -> None:
+        source = SourceMesh(
+            path=Path("triangle.obj"),
+            vertices=np.array(
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+                dtype=np.float64,
+            ),
+            faces=np.array([[0, 1, 2]], dtype=np.int64),
+        )
+        with self.assertRaisesRegex(ValueError, "简化率"):
+            convert_mesh(
+                source,
+                ConversionOptions(symbol="triangle", simplify_ratio=1.0),
+            )
+
     def test_write_c_header_normals_and_obj(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)

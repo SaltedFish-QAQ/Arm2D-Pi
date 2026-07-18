@@ -13,6 +13,11 @@ try:
 except ImportError:  # pragma: no cover - covered by the GUI error path
     trimesh = None
 
+try:
+    import fast_simplification
+except ImportError:  # pragma: no cover - covered by the simplification error path
+    fast_simplification = None
+
 
 SUPPORTED_EXTENSIONS = {".obj", ".stl"}
 
@@ -57,6 +62,7 @@ class ConversionOptions:
     normalize: bool = True
     target_extent: float = 2.0
     scale: float = 1.0
+    simplify_ratio: float = 0.0
     flip_winding: bool = False
     include_vertex_normals: bool = False
     export_obj: bool = False
@@ -78,6 +84,7 @@ class ConvertedMesh:
     face_normals: np.ndarray
     vertex_normals: np.ndarray | None
     source_origin: np.ndarray
+    simplified_faces_removed: int
     dropped_degenerate_faces: int
     applied_scale: float
 
@@ -181,6 +188,48 @@ def _build_vertex_normals(
     return normals
 
 
+def _simplify_mesh(
+    vertices: np.ndarray,
+    faces: np.ndarray,
+    simplify_ratio: float,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    if simplify_ratio <= 0.0 or len(faces) <= 1:
+        return vertices, faces, 0
+    if fast_simplification is None:
+        raise RuntimeError(
+            "缺少模型简化组件 fast-simplification。请安装依赖："
+            "python -m pip install -r requirements.txt"
+        )
+
+    target_face_count = max(1, round(len(faces) * (1.0 - simplify_ratio)))
+    if target_face_count >= len(faces):
+        return vertices, faces, 0
+
+    simplified_vertices, simplified_faces = fast_simplification.simplify(
+        points=np.asarray(vertices, dtype=np.float64),
+        triangles=np.asarray(faces, dtype=np.int64),
+        target_count=target_face_count,
+    )
+    simplified_vertices = np.asarray(simplified_vertices, dtype=np.float64)
+    simplified_faces = np.asarray(simplified_faces, dtype=np.int64)
+    if (
+        simplified_vertices.ndim != 2
+        or simplified_vertices.shape[1] != 3
+        or len(simplified_vertices) == 0
+        or simplified_faces.ndim != 2
+        or simplified_faces.shape[1] != 3
+        or len(simplified_faces) == 0
+    ):
+        raise ValueError("模型简化后没有得到有效的三角网格")
+
+    removed_faces = len(faces) - len(simplified_faces)
+    return (
+        np.ascontiguousarray(simplified_vertices),
+        np.ascontiguousarray(simplified_faces),
+        removed_faces,
+    )
+
+
 def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMesh:
     if options.axis_preset not in AXIS_PRESETS:
         raise ValueError(f"未知的坐标系转换方式：{options.axis_preset}")
@@ -188,6 +237,8 @@ def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMes
         raise ValueError("目标尺寸必须大于零")
     if options.scale <= 0.0:
         raise ValueError("附加缩放必须大于零")
+    if not 0.0 <= options.simplify_ratio < 1.0:
+        raise ValueError("模型简化率必须大于等于 0 且小于 100%")
     if not 1 <= options.float_precision <= 9:
         raise ValueError("小数精度必须在 1 到 9 之间")
 
@@ -201,9 +252,6 @@ def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMes
     vertices = np.asarray(source.vertices @ matrix.T, dtype=np.float64)
     faces = source.faces.copy()
 
-    if options.flip_winding:
-        faces = faces[:, [0, 2, 1]]
-
     if source_origin is not None:
         transformed_origin = source_origin @ matrix.T
     elif options.center:
@@ -214,6 +262,12 @@ def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMes
         source_origin = np.zeros(3, dtype=np.float64)
     vertices -= transformed_origin
 
+    vertices, faces, simplified_faces = _simplify_mesh(
+        vertices,
+        faces,
+        options.simplify_ratio,
+    )
+
     applied_scale = options.scale
     if options.normalize:
         maximum_extent = float(np.ptp(vertices, axis=0).max())
@@ -221,6 +275,9 @@ def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMes
             raise ValueError("模型尺寸为零，无法归一化")
         applied_scale *= options.target_extent / maximum_extent
     vertices *= applied_scale
+
+    if options.flip_winding:
+        faces = faces[:, [0, 2, 1]]
 
     triangles = vertices[faces]
     face_cross = np.cross(
@@ -269,6 +326,7 @@ def convert_mesh(source: SourceMesh, options: ConversionOptions) -> ConvertedMes
             None if vertex_normals is None else np.ascontiguousarray(vertex_normals)
         ),
         source_origin=np.ascontiguousarray(source_origin),
+        simplified_faces_removed=simplified_faces,
         dropped_degenerate_faces=dropped_faces,
         applied_scale=applied_scale,
     )
@@ -435,6 +493,13 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-normalize", action="store_true")
     parser.add_argument("--target-extent", type=float, default=2.0)
     parser.add_argument("--scale", type=float, default=1.0)
+    parser.add_argument(
+        "--simplify",
+        type=float,
+        default=0.0,
+        metavar="PERCENT",
+        help="percentage of triangle faces to remove",
+    )
     parser.add_argument("--flip-winding", action="store_true")
     parser.add_argument("--vertex-normals", action="store_true")
     parser.add_argument("--export-obj", action="store_true")
@@ -455,6 +520,7 @@ def main() -> None:
         normalize=not args.no_normalize,
         target_extent=args.target_extent,
         scale=args.scale,
+        simplify_ratio=args.simplify / 100.0,
         flip_winding=args.flip_winding,
         include_vertex_normals=args.vertex_normals,
         export_obj=args.export_obj,

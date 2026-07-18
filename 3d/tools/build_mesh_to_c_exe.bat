@@ -8,7 +8,12 @@ set "APP_NAME=%~1"
 if not defined APP_NAME set "APP_NAME=MeshToC"
 
 if not exist "%BUILD_DEPS%\PyInstaller\__init__.py" (
-    python -m pip install --target "%BUILD_DEPS%" numpy trimesh pyinstaller
+    python -m pip install --target "%BUILD_DEPS%" -r requirements.txt pyinstaller
+    if errorlevel 1 exit /b %errorlevel%
+)
+
+if not exist "%BUILD_DEPS%\fast_simplification\__init__.py" (
+    python -m pip install --target "%BUILD_DEPS%" fast-simplification
     if errorlevel 1 exit /b %errorlevel%
 )
 
@@ -19,6 +24,7 @@ python -S -m PyInstaller ^
     --clean ^
     --onefile ^
     --windowed ^
+    --collect-all fast_simplification ^
     --name "%APP_NAME%" ^
     --distpath dist ^
     --workpath build ^

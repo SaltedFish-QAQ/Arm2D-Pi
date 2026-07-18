@@ -244,6 +244,8 @@ class MeshToCApp(tk.Tk):
         self.normalize_var = tk.BooleanVar(value=True)
         self.target_extent_var = tk.StringVar(value="2.0")
         self.scale_var = tk.StringVar(value="1.0")
+        self.simplify_percent_var = tk.DoubleVar(value=0.0)
+        self.simplify_percent_label_var = tk.StringVar(value="0%")
         self.flip_winding_var = tk.BooleanVar(value=False)
         self.vertex_normals_var = tk.BooleanVar(value=False)
         self.export_obj_var = tk.BooleanVar(value=False)
@@ -335,7 +337,43 @@ class MeshToCApp(tk.Tk):
         self.preview = WireframePreview(preview_frame)
         self.preview.pack(fill=tk.BOTH, expand=True)
 
-        self._build_settings(settings_frame)
+        settings_canvas = tk.Canvas(
+            settings_frame,
+            width=350,
+            highlightthickness=0,
+            borderwidth=0,
+            background=self.cget("background"),
+        )
+        settings_scrollbar = ttk.Scrollbar(
+            settings_frame,
+            orient=tk.VERTICAL,
+            command=settings_canvas.yview,
+        )
+        settings_canvas.configure(yscrollcommand=settings_scrollbar.set)
+        settings_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        settings_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        settings_content = ttk.Frame(settings_canvas)
+        settings_window = settings_canvas.create_window(
+            (0, 0),
+            window=settings_content,
+            anchor="nw",
+        )
+        settings_content.bind(
+            "<Configure>",
+            lambda _event: settings_canvas.configure(
+                scrollregion=settings_canvas.bbox("all")
+            ),
+        )
+        settings_canvas.bind(
+            "<Configure>",
+            lambda event: settings_canvas.itemconfigure(
+                settings_window,
+                width=event.width,
+            ),
+        )
+
+        self._build_settings(settings_content)
 
         log_frame = ttk.Frame(root)
         log_frame.pack(fill=tk.X, pady=(8, 0))
@@ -467,9 +505,37 @@ class MeshToCApp(tk.Tk):
         ttk.Entry(transform, textvariable=self.scale_var, width=10).grid(
             row=8, column=1, sticky="w", padx=(8, 0), pady=(6, 0)
         )
+
+        ttk.Label(transform, text="简化率（降低面数）").grid(
+            row=9, column=0, sticky="w", pady=(8, 0)
+        )
+        simplify_controls = ttk.Frame(transform)
+        simplify_controls.grid(
+            row=9, column=1, sticky="ew", padx=(8, 0), pady=(8, 0)
+        )
+        simplify_controls.columnconfigure(0, weight=1)
+        self.simplify_scale = ttk.Scale(
+            simplify_controls,
+            from_=0.0,
+            to=95.0,
+            variable=self.simplify_percent_var,
+            command=self._on_simplify_changed,
+        )
+        self.simplify_scale.grid(row=0, column=0, sticky="ew")
+        self.simplify_scale.bind(
+            "<ButtonRelease-1>",
+            lambda _event: self._apply_simplification_preview(),
+        )
+        ttk.Label(
+            simplify_controls,
+            textvariable=self.simplify_percent_label_var,
+            width=5,
+            anchor="e",
+        ).grid(row=0, column=1, padx=(6, 0))
+
         ttk.Checkbutton(
             transform, text="翻转三角面绕序", variable=self.flip_winding_var
-        ).grid(row=9, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        ).grid(row=10, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
         output = ttk.LabelFrame(parent, text="生成内容", padding=10)
         output.pack(fill=tk.X, padx=(10, 0), pady=(0, 8))
@@ -576,6 +642,15 @@ class MeshToCApp(tk.Tk):
         self.origin_z_var.set("0.0")
         self._update_origin_controls()
 
+    def _on_simplify_changed(self, value: str) -> None:
+        percent = round(float(value))
+        self.simplify_percent_label_var.set(f"{percent}%")
+
+    def _apply_simplification_preview(self) -> None:
+        if self._busy or not self.source_var.get().strip():
+            return
+        self.load_preview()
+
     def _options_from_ui(self) -> ConversionOptions:
         axis_key = self._axis_label_to_key.get(self.axis_var.get())
         if axis_key is None:
@@ -587,6 +662,7 @@ class MeshToCApp(tk.Tk):
             merge_digits = int(self.merge_digits_var.get())
             target_extent = float(self.target_extent_var.get())
             scale = float(self.scale_var.get())
+            simplify_ratio = round(float(self.simplify_percent_var.get())) / 100.0
             float_precision = int(self.precision_var.get())
             origin = None
             if origin_mode == "custom":
@@ -607,6 +683,7 @@ class MeshToCApp(tk.Tk):
             normalize=self.normalize_var.get(),
             target_extent=target_extent,
             scale=scale,
+            simplify_ratio=simplify_ratio,
             flip_winding=self.flip_winding_var.get(),
             include_vertex_normals=self.vertex_normals_var.get(),
             export_obj=self.export_obj_var.get(),
@@ -648,6 +725,11 @@ class MeshToCApp(tk.Tk):
         self._append_log(
             f"已加载 {source.path.name}：{len(converted.vertices)} 个顶点，"
             f"{len(converted.faces)} 个三角面"
+            + (
+                f"（简化移除 {converted.simplified_faces_removed} 面）"
+                if converted.simplified_faces_removed
+                else ""
+            )
         )
 
     def export_files(self) -> None:
@@ -709,8 +791,10 @@ class MeshToCApp(tk.Tk):
             f"{len(source.vertices)} 顶点 / {len(source.faces)} 三角面"
         )
         dropped = ""
+        if converted.simplified_faces_removed:
+            dropped += f" / 简化 -{converted.simplified_faces_removed} 面"
         if converted.dropped_degenerate_faces:
-            dropped = f" / 移除 {converted.dropped_degenerate_faces} 退化面"
+            dropped += f" / 移除 {converted.dropped_degenerate_faces} 退化面"
         self.output_stats_var.set(
             f"{len(converted.vertices)} 顶点 / "
             f"{len(converted.faces)} 三角面{dropped}"
@@ -752,6 +836,7 @@ class MeshToCApp(tk.Tk):
         state = tk.DISABLED if busy else tk.NORMAL
         self.load_button.configure(state=state)
         self.export_button.configure(state=state)
+        self.simplify_scale.configure(state=state)
         if busy:
             self.progress.start(10)
         else:

@@ -57,6 +57,21 @@ The model instance can reference the arrays directly:
 The default transform centers the model and scales its longest dimension to
 `2.0`, which matches the current renderer's approximate `[-1, 1]` model space.
 
+## Simplifying the model
+
+Use the Chinese GUI's simplification slider to reduce the triangle count from
+0% to 95%. Releasing the slider refreshes the preview. The exporter keeps the
+chosen origin stable, simplifies the transformed mesh, applies the requested
+target size, and rebuilds face and optional vertex normals before writing the C
+arrays.
+
+The command-line tool exposes the same setting. For example, remove roughly
+75% of the input triangles with:
+
+```powershell
+python mesh_to_c.py input.stl output_folder --simplify 75
+```
+
 ## Adjusting the model origin
 
 The Chinese GUI provides three origin modes:
