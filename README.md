@@ -154,7 +154,10 @@ By default, you can observe the test result in **Debug (printf) View** as shown 
 
 
 
-**NOTE**: **The coremark has to run at least 10 secs to generate a valid result**. Fail to do so,  you can change the macro `ITERATIONS` defined in `core_portme.h` to a bigger value and try again.
+**NOTE**:
+- **The coremark has to run at least 10 secs to generate a valid result**. Fail to do so,  you can change the macro `ITERATIONS` defined in `core_portme.h` to a bigger value and try again.
+
+- the download and debug interface is CLK DIO VCC/3V3 GND form up to down.
 
 ![](./documents/Pictures/core_portme.png) 
 
