@@ -418,33 +418,6 @@
         </Group>
         <Group>
           <GroupName>drivers</GroupName>
-          <Files>
-            <File>
-              <FileName>drv_QMI8658.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\deivers\drv_QMI8658.c</FilePath>
-            </File>
-            <File>
-              <FileName>bm8563.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\deivers\bm8563.c</FilePath>
-            </File>
-            <File>
-              <FileName>drv_ir.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\deivers\drv_ir.c</FilePath>
-            </File>
-            <File>
-              <FileName>drv_light.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\deivers\drv_light.c</FilePath>
-            </File>
-            <File>
-              <FileName>drv_buzzer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\deivers\drv_buzzer.c</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>GuiUser</GroupName>
