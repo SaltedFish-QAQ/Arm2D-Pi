@@ -1,7 +1,0 @@
-- depth: 16
-- size:
-    width: 320
-    height: 240
-- ui:
-    - path: E:/develop/Arm2D-Pi/demo/03_RP2040_Keil_ldgui/project/mdk/eeProject/home.ui
-    - path: E:/develop/Arm2D-Pi/demo/03_RP2040_Keil_ldgui/project/mdk/eeProject/page1.ui

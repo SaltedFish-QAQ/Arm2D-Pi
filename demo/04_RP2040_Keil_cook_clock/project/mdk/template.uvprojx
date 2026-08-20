@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USING_RP2040_PWM,PICO_FLASH_SIZE_BYTES=33554432,PICO_RP2040_USB_DEVICE_UFRAME_FIX=0,PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1,PICO_TIME_DEFAULT_ALARM_POOL_DISABLED=1,RP2040_STATIC_USB_IRQ_HANDLER=1</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\..\deivers;..\..\application;..\..\platform;./eeProject/GuiUser;./eeProject/GuiUser/fonts;./eeProject/GuiUser/images;./eeProject/GuiUser/output</IncludePath>
+              <IncludePath>.;..\..\deivers;..\..\application;..\..\platform</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -355,7 +355,7 @@
             <useXO>0</useXO>
             <ClangAsOpt>1</ClangAsOpt>
             <VariousControls>
-              <MiscControls>-include "RTE/Device/RP2040_Core0/boot2_config.h"</MiscControls>
+              <MiscControls>-include "RTE/Device/RP2040_Core0/boot2_config.h" -Wno-unused-command-line-argument</MiscControls>
               <Define>PICO_MAX_SHARED_IRQ_HANDLERS=4,LIB_CMSIS_CORE=1,PICO_CMSIS_RENAME_EXCEPTIONS=1</Define>
               <Undefine></Undefine>
               <IncludePath>..\..\pico-sdk\src\rp2040\hardware_regs\include;..\..\pico-sdk\src\rp2_common\hardware_irq\include;..\..\pico-sdk\src\rp2_common\pico_platform\include;..\..\pico-sdk\src\common\pico_base\include;.\wrapper\pico_base;..\..\pico-sdk\src\rp2_common\boot_stage2\asminclude;..\..\pico-sdk\src\rp2_common\boot_stage2\include</IncludePath>
@@ -420,76 +420,6 @@
           <GroupName>drivers</GroupName>
         </Group>
         <Group>
-          <GroupName>GuiUser</GroupName>
-          <Files>
-            <File>
-              <FileName>home.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser\home.c</FilePath>
-            </File>
-            <File>
-              <FileName>homeLogic.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser\homeLogic.c</FilePath>
-            </File>
-            <File>
-              <FileName>page1.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser\page1.c</FilePath>
-            </File>
-            <File>
-              <FileName>page1Logic.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser\page1Logic.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>GuiUser/fonts</GroupName>
-          <Files>
-            <File>
-              <FileName>SimSun_9.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/fonts\SimSun_9.c</FilePath>
-            </File>
-            <File>
-              <FileName>Source_Han_Sans_SC_Normal_16.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/fonts\Source_Han_Sans_SC_Normal_16.c</FilePath>
-            </File>
-            <File>
-              <FileName>Source_Han_Sans_SC_Normal_22.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/fonts\Source_Han_Sans_SC_Normal_22.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>GuiUser/images</GroupName>
-          <Files>
-            <File>
-              <FileName>calendar_64.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/images\calendar_64.c</FilePath>
-            </File>
-            <File>
-              <FileName>clock_64.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/images\clock_64.c</FilePath>
-            </File>
-            <File>
-              <FileName>management_64.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/images\management_64.c</FilePath>
-            </File>
-            <File>
-              <FileName>schedule_64.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\eeProject/GuiUser/images\schedule_64.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>::Acceleration</GroupName>
         </Group>
         <Group>
@@ -497,9 +427,6 @@
         </Group>
         <Group>
           <GroupName>::Device</GroupName>
-        </Group>
-        <Group>
-          <GroupName>::LingDongGui</GroupName>
         </Group>
         <Group>
           <GroupName>::Utilities</GroupName>
@@ -518,6 +445,12 @@
         </targetInfos>
       </component>
       <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="LCD ASCII Printf" Cvendor="ARM" Cversion="3.0.2" condition="Arm-2D-Printf">
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev317+g40b2a62"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Acceleration" Cgroup="Arm-2D Helper" Csub="Display Adapter" Cvendor="ARM" Cversion="4.4.3" condition="Arm-2D-Displayer-Adapter" maxInstances="8">
         <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev317+g40b2a62"/>
         <targetInfos>
           <targetInfo name="AC6-flash"/>
@@ -585,12 +518,6 @@
       </component>
       <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="RaspberryPi" Cversion="1.1.0" condition="RP2040 CMSIS">
         <package name="RP2xxx_DFP" schemaVersion="1.7.28" url="https://github.com/raspberrypi/cmsis-rp2xxx-dfp/releases/download/v0.9.5/" vendor="RaspberryPi" version="0.9.5"/>
-        <targetInfos>
-          <targetInfo name="AC6-flash"/>
-        </targetInfos>
-      </component>
-      <component Cclass="LingDongGui" Cgroup="ldgui" Cvendor="gzbkey" Cversion="0.9.0" condition="Arm-2D">
-        <package name="LingDongGUI" schemaVersion="1.7.28" url="https://github.com/gzbkey/LingDongGUI/" vendor="gzbkey" version="9.9.9"/>
         <targetInfos>
           <targetInfo name="AC6-flash"/>
         </targetInfos>
@@ -692,16 +619,20 @@
         </targetInfos>
       </file>
       <file attr="config" category="sourceC" name="Helper\template\arm_2d_disp_adapter.c" version="4.4.3">
-        <instance index="0" removed="1">RTE\Acceleration\arm_2d_disp_adapter_0.c</instance>
+        <instance index="0">RTE\Acceleration\arm_2d_disp_adapter_0.c</instance>
         <component Cclass="Acceleration" Cgroup="Arm-2D Helper" Csub="Display Adapter" Cvendor="ARM" Cversion="4.4.3" condition="Arm-2D-Displayer-Adapter" maxInstances="8"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="Helper\template\arm_2d_disp_adapter.h" version="4.4.3">
-        <instance index="0" removed="1">RTE\Acceleration\arm_2d_disp_adapter_0.h</instance>
+        <instance index="0">RTE\Acceleration\arm_2d_disp_adapter_0.h</instance>
         <component Cclass="Acceleration" Cgroup="Arm-2D Helper" Csub="Display Adapter" Cvendor="ARM" Cversion="4.4.3" condition="Arm-2D-Displayer-Adapter" maxInstances="8"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="sourceC" name="Helper\template\arm_2d_scene.c" version="1.5.0">
         <instance index="0" removed="1">RTE\Acceleration\arm_2d_scene_0.c</instance>
@@ -1415,38 +1346,6 @@
         <instance index="0">RTE\Device\RP2040_Core0\system_rp2040.c</instance>
         <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="RaspberryPi" Cversion="1.1.0" condition="RP2040 CMSIS" isDefaultVariant="1"/>
         <package name="RP2xxx_DFP" schemaVersion="1.7.28" url="https://github.com/raspberrypi/cmsis-rp2xxx-dfp/releases/download/v0.9.5/" vendor="RaspberryPi" version="0.9.5"/>
-        <targetInfos>
-          <targetInfo name="AC6-flash"/>
-        </targetInfos>
-      </file>
-      <file attr="config" category="sourceC" name="src\porting\arm_2d_disp_adapter_0.c" version="1.0.0">
-        <instance index="0">RTE\LingDongGui\arm_2d_disp_adapter_0.c</instance>
-        <component Cclass="LingDongGui" Cgroup="ldgui" Cvendor="gzbkey" Cversion="0.9.0" condition="Arm-2D"/>
-        <package name="LingDongGUI" schemaVersion="1.7.28" url="https://github.com/gzbkey/LingDongGUI/" vendor="gzbkey" version="0.9.1-dev22+gc4ac49e"/>
-        <targetInfos>
-          <targetInfo name="AC6-flash"/>
-        </targetInfos>
-      </file>
-      <file attr="config" category="header" name="src\porting\arm_2d_disp_adapter_0.h" version="1.0.0">
-        <instance index="0">RTE\LingDongGui\arm_2d_disp_adapter_0.h</instance>
-        <component Cclass="LingDongGui" Cgroup="ldgui" Cvendor="gzbkey" Cversion="0.9.0" condition="Arm-2D"/>
-        <package name="LingDongGUI" schemaVersion="1.7.28" url="https://github.com/gzbkey/LingDongGUI/" vendor="gzbkey" version="0.9.1-dev22+gc4ac49e"/>
-        <targetInfos>
-          <targetInfo name="AC6-flash"/>
-        </targetInfos>
-      </file>
-      <file attr="config" category="sourceC" name="src\porting\ldConfig.c" version="1.3.0">
-        <instance index="0">RTE\LingDongGui\ldConfig.c</instance>
-        <component Cclass="LingDongGui" Cgroup="ldgui" Cvendor="gzbkey" Cversion="0.9.0" condition="Arm-2D"/>
-        <package name="LingDongGUI" schemaVersion="1.7.28" url="https://github.com/gzbkey/LingDongGUI/" vendor="gzbkey" version="0.9.1-dev22+gc4ac49e"/>
-        <targetInfos>
-          <targetInfo name="AC6-flash"/>
-        </targetInfos>
-      </file>
-      <file attr="config" category="header" name="src\porting\ldConfig.h" version="1.5.1">
-        <instance index="0">RTE\LingDongGui\ldConfig.h</instance>
-        <component Cclass="LingDongGui" Cgroup="ldgui" Cvendor="gzbkey" Cversion="0.9.0" condition="Arm-2D"/>
-        <package name="LingDongGUI" schemaVersion="1.7.28" url="https://github.com/gzbkey/LingDongGUI/" vendor="gzbkey" version="0.9.1-dev22+gc4ac49e"/>
         <targetInfos>
           <targetInfo name="AC6-flash"/>
         </targetInfos>

@@ -124,14 +124,15 @@ void SysTick_Handler(void)
 
 }
 
-//void Disp0_DrawBitmap(  int16_t x, 
-//                        int16_t y, 
-//                        int16_t width, 
-//                        int16_t height, 
-//                        const uint8_t *pchBitmap)
-//{
-//    st7789_draw_bitmap(x, y, width, height, pchBitmap);
-//}
+int32_t Disp0_DrawBitmap(  int16_t x,
+                           int16_t y,
+                           int16_t width,
+                           int16_t height,
+                           const uint8_t *pchBitmap)
+{
+    st7789_draw_bitmap(x, y, width, height, pchBitmap);
+    return 0;
+}
 
 //#if __DISP0_CFG_ENABLE_ASYNC_FLUSHING__
 //void __disp_adapter0_request_async_flushing(void *pTarget,

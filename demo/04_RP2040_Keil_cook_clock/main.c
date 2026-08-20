@@ -1,23 +1,15 @@
 #include "platform/pi_platform.h"
-#include <stdio.h>
-#include "ldgui.h"
-#include "home.h"
+#include "arm_2d.h"
+#include "arm_2d_disp_adapter_0.h"
 
-static void system_init(void)
+int main(void)
 {
     platform_init();
-}
+    arm_2d_init();
+    disp_adapter0_init();
 
-int main(void) 
-{
-    platform_init();
-    sleep_ms(500);
-
-    ldGuiInit((ldPageFuncGroup_t *)&homeFunc);
-    
-    while(1)
-    {
-        ldGuiLoop();
+    while (true) {
+        disp_adapter0_task();
     }
 }
 

@@ -164,7 +164,7 @@ extern "C" {
 // <i> Configure the default navigation layer of this display adapter. 
 // <i> NOTE: Disable the navigation layer will also remove the real-time FPS display.
 #ifndef __DISP0_CFG_NAVIGATION_LAYER_MODE__
-#   define __DISP0_CFG_NAVIGATION_LAYER_MODE__                     0
+#   define __DISP0_CFG_NAVIGATION_LAYER_MODE__                     1
 #endif
 
 // <o>Number of iterations <0-2000>
@@ -232,7 +232,7 @@ extern "C" {
 // <q>Enable the helper service for Asynchronous Flushing
 // <i> Please select this option when using asynchronous flushing, e.g. DMA + ISR 
 #ifndef __DISP0_CFG_ENABLE_ASYNC_FLUSHING__
-#   define __DISP0_CFG_ENABLE_ASYNC_FLUSHING__                     1
+#   define __DISP0_CFG_ENABLE_ASYNC_FLUSHING__                     0
 #endif
 
 // <q>Enable the helper service for 3FB (LCD Direct Mode)
@@ -244,7 +244,7 @@ extern "C" {
 // <q>Disable the default scene
 // <i> Remove the default scene for this display adapter. We highly recommend you to disable the default scene when creating real applications.
 #ifndef __DISP0_CFG_DISABLE_DEFAULT_SCENE__
-#   define __DISP0_CFG_DISABLE_DEFAULT_SCENE__                     1
+#   define __DISP0_CFG_DISABLE_DEFAULT_SCENE__                     0
 #endif
 
 // <o>Maximum number of Virtual Resources used per API
@@ -257,7 +257,7 @@ extern "C" {
 // <i> This feature is disabled by default.
 // <i> NOTE: When selecting the background loading mode, you can ONLY use virtual resource as the source tile in the tile-copy-only APIs. 
 #ifndef __DISP0_CFG_VIRTUAL_RESOURCE_HELPER__
-#   define __DISP0_CFG_VIRTUAL_RESOURCE_HELPER__                   2
+#   define __DISP0_CFG_VIRTUAL_RESOURCE_HELPER__                   0
 #endif
 
 // <q>Use heap to allocate buffer in the virtual resource helper service
