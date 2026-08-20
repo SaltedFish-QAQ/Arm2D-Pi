@@ -29,6 +29,15 @@ extern "C" {
 #define arm_2d_scene_cook_clock_init(__DISP_ADAPTER_PTR, ...)                  \
             __arm_2d_scene_cook_clock_init((__DISP_ADAPTER_PTR), (NULL, ##__VA_ARGS__))
 
+#define cook_clock_set_colour(__COLOUR)                                         \
+            __arm_2d_scene_cook_clock_set_colour((__COLOUR))
+
+#define cook_clock_set_countdown(__DURATION_IN_SECONDS)                         \
+            __arm_2d_scene_cook_clock_set_countdown((__DURATION_IN_SECONDS))
+
+#define cook_clock_task()                                                        \
+            __arm_2d_scene_cook_clock_task()
+
 /*============================ TYPES =========================================*/
 
 typedef struct user_scene_cook_clock_t user_scene_cook_clock_t;
@@ -37,9 +46,11 @@ struct user_scene_cook_clock_t {
     implement(arm_2d_scene_t);
 
 ARM_PRIVATE(
-    int64_t lTimestamp;
     bool bUserAllocated;
-    uint16_t hwSecondsRemaining;
+    uint32_t wSecondsRemaining;
+    uint32_t wCountdownDuration;
+    uint64_t qwCountdownStartTime;
+    arm_2d_color_rgb565_t tDisplayColour;
     user_generic_loader_arc_t tCountdownRing;
 )
 };
@@ -51,6 +62,15 @@ extern
 user_scene_cook_clock_t *__arm_2d_scene_cook_clock_init(
                                     arm_2d_scene_player_t *ptDispAdapter,
                                     user_scene_cook_clock_t *ptScene);
+
+extern
+void __arm_2d_scene_cook_clock_set_colour(arm_2d_color_rgb565_t tColour);
+
+extern
+void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds);
+
+extern
+void __arm_2d_scene_cook_clock_task(void);
 
 #ifdef   __cplusplus
 }
