@@ -22,6 +22,7 @@
 #include "arm_2d_disp_adapters.h"
 
 #include "st7789_simple.h"
+#include <string.h>
 #include "hardware/clocks.h"
 #include "hardware/pll.h"
 #include "hardware/regs/clocks.h"
@@ -133,6 +134,24 @@ int32_t Disp0_DrawBitmap(  int16_t x,
     st7789_draw_bitmap(x, y, width, height, pchBitmap);
     return 0;
 }
+
+#if __DISP0_CFG_VIRTUAL_RESOURCE_HELPER__
+void __disp_adapter0_vres_read_memory(  intptr_t pObj,
+                                        void *pBuffer,
+                                        uintptr_t pAddress,
+                                        size_t nSizeInByte)
+{
+    ARM_2D_UNUSED(pObj);
+    memcpy(pBuffer, (const void *)pAddress, nSizeInByte);
+}
+
+uintptr_t __disp_adapter0_vres_get_asset_address(uintptr_t pObj,
+                                                  arm_2d_vres_t *ptVRES)
+{
+    ARM_2D_UNUSED(ptVRES);
+    return pObj;
+}
+#endif
 
 #if __DISP0_CFG_ENABLE_ASYNC_FLUSHING__
 void __disp_adapter0_request_async_flushing(void *pTarget,

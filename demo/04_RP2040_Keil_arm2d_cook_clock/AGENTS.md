@@ -8,4 +8,4 @@
 
 ## Local Build Environment
 
-- Keil MDK is installed at `D:\keil538`; use `D:\keil538\UV4\UV4.exe` for command-line builds.
+- Keil MDK is installed at `E:\Keil_v5`; use `E:\Keil_v5\UV4\UV4.exe` for command-line builds.

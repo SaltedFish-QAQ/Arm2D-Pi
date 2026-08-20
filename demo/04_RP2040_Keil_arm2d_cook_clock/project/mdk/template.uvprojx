@@ -389,6 +389,21 @@
               <FileType>1</FileType>
               <FilePath>..\..\main.c</FilePath>
             </File>
+            <File>
+              <FileName>arm_2d_scene_cook_clock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\service-cook-clock\arm_2d_scene_cook_clock.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_2d_scene_cook_clock.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\service-cook-clock\arm_2d_scene_cook_clock.h</FilePath>
+            </File>
+            <File>
+              <FileName>user_generic_loader_arc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\02_RP2040_Keil-arm2d_3d\3d\user_generic_loader_arc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -446,6 +461,12 @@
       </component>
       <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="LCD ASCII Printf" Cvendor="ARM" Cversion="3.0.2" condition="Arm-2D-Printf">
         <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev317+g40b2a62"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders">
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
         <targetInfos>
           <targetInfo name="AC6-flash"/>
         </targetInfos>
@@ -1123,40 +1144,52 @@
         </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\freetype_loader\arm_freetype_cfg.h" version="1.0.0">
-        <instance index="0" removed="1">RTE\Acceleration\arm_freetype_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_freetype_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\lmsk_loader\arm_lmsk_cfg.h" version="1.1.0">
-        <instance index="0" removed="1">RTE\Acceleration\arm_lmsk_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_lmsk_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\qoi_loader\arm_qoi_cfg.h" version="1.2.1">
-        <instance index="0" removed="1">RTE\Acceleration\arm_qoi_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_qoi_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\tjpgd_loader\arm_tjpgd_cfg.h" version="1.1.0">
-        <instance index="0" removed="1">RTE\Acceleration\arm_tjpgd_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_tjpgd_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\zhrgb565_loader\arm_zhrgb565_cfg.h" version="1.1.0">
-        <instance index="0" removed="1">RTE\Acceleration\arm_zhrgb565_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_zhrgb565_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="header" name="examples\common\loader\zjpgd_loader\arm_zjpgd_cfg.h" version="1.0.0">
-        <instance index="0" removed="1">RTE\Acceleration\arm_zjpgd_cfg.h</instance>
-        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.11" condition="Arm-2D-Loaders"/>
-        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="9.9.99"/>
-        <targetInfos/>
+        <instance index="0">RTE\Acceleration\arm_zjpgd_cfg.h</instance>
+        <component Cclass="Acceleration" Cgroup="Arm-2D Extras" Csub="Loaders" Cvendor="ARM" Cversion="5.6.4" condition="Arm-2D-Loaders"/>
+        <package name="Arm-2D" schemaVersion="1.7.37" url="https://www.keil.com/pack/" vendor="ARM" version="1.2.6-dev243+g6dc9af1"/>
+        <targetInfos>
+          <targetInfo name="AC6-flash"/>
+        </targetInfos>
       </file>
       <file attr="config" category="sourceC" name="examples\render_tests\bad_apple.c" version="1.1.0">
         <instance index="0" removed="1">RTE\Acceleration\bad_apple.c</instance>
