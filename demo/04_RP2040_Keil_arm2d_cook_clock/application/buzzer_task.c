@@ -1,16 +1,13 @@
-#include "board_peripherals.h"
+#include "buzzer_task.h"
 
-#include "bsp_cfg.h"
-#include "hardware/gpio.h"
-#include "hardware/i2c.h"
-#include "pico/stdlib.h"
+#include <stdbool.h>
+#include <stddef.h>
 
-#include "drv_QMI8658.h"
 #include "drv_buzzer.h"
+#include "pico/stdlib.h"
 
 static uint32_t s_wBuzzerStopMS;
 static bool s_bBuzzerTimed;
-static bool s_bImuReady;
 static app_alert_handler_t s_fnAlertHandler;
 static void *s_pAlertHandlerTarget;
 
@@ -161,14 +158,90 @@ static const drv_buzzer_score_t c_tHappyBirthdayScore = {
                sizeof(c_tHappyBirthdayNotes[0])),
 };
 
-bool app_peripherals_init(void)
+#define APP_BUZZER_POWER_KEY_FEEDBACK_DURATION_MS      100u
+
+static const drv_buzzer_note_t c_tPowerKeyShortPressNotes[] = {
+    {1200u, APP_BUZZER_POWER_KEY_FEEDBACK_DURATION_MS},
+};
+
+static const drv_buzzer_score_t c_tPowerKeyShortPressScore = {
+    "Power key short press",
+    c_tPowerKeyShortPressNotes,
+    (uint16_t)(sizeof(c_tPowerKeyShortPressNotes) /
+               sizeof(c_tPowerKeyShortPressNotes[0])),
+};
+
+static const drv_buzzer_note_t c_tPowerKeyLongPressNotes[] = {
+    {1600u, APP_BUZZER_POWER_KEY_FEEDBACK_DURATION_MS},
+};
+
+static const drv_buzzer_score_t c_tPowerKeyLongPressScore = {
+    "Power key long press",
+    c_tPowerKeyLongPressNotes,
+    (uint16_t)(sizeof(c_tPowerKeyLongPressNotes) /
+               sizeof(c_tPowerKeyLongPressNotes[0])),
+};
+
+static const drv_buzzer_note_t c_tPowerKeyDoublePressNotes[] = {
+    {1400u, 60u},
+    {DRV_BUZZER_REST, 40u},
+    {1800u, 60u},
+};
+
+static const drv_buzzer_score_t c_tPowerKeyDoublePressScore = {
+    "Power key double press",
+    c_tPowerKeyDoublePressNotes,
+    (uint16_t)(sizeof(c_tPowerKeyDoublePressNotes) /
+               sizeof(c_tPowerKeyDoublePressNotes[0])),
+};
+
+static const drv_buzzer_note_t c_tPowerKeysTogetherNotes[] = {
+    {1000u, 80u},
+    {DRV_BUZZER_REST, 40u},
+    {1000u, 80u},
+};
+
+static const drv_buzzer_score_t c_tPowerKeysTogetherScore = {
+    "Power keys together",
+    c_tPowerKeysTogetherNotes,
+    (uint16_t)(sizeof(c_tPowerKeysTogetherNotes) /
+               sizeof(c_tPowerKeysTogetherNotes[0])),
+};
+
+static const drv_buzzer_note_t c_tPowerOnNotes[] = {
+    {APP_BUZZER_NOTE_C5_HZ, 60u},
+    {DRV_BUZZER_REST,       40u},
+    {APP_BUZZER_NOTE_E5_HZ, 60u},
+    {DRV_BUZZER_REST,       40u},
+    {APP_BUZZER_NOTE_G5_HZ, 100u},
+};
+
+static const drv_buzzer_score_t c_tPowerOnScore = {
+    "Power on",
+    c_tPowerOnNotes,
+    (uint16_t)(sizeof(c_tPowerOnNotes) / sizeof(c_tPowerOnNotes[0])),
+};
+
+static const drv_buzzer_note_t c_tPowerOffNotes[] = {
+    {APP_BUZZER_NOTE_G5_HZ, 100u},
+    {DRV_BUZZER_REST,       40u},
+    {APP_BUZZER_NOTE_E5_HZ, 60u},
+    {DRV_BUZZER_REST,       40u},
+    {APP_BUZZER_NOTE_C5_HZ, 60u},
+};
+
+static const drv_buzzer_score_t c_tPowerOffScore = {
+    "Power off",
+    c_tPowerOffNotes,
+    (uint16_t)(sizeof(c_tPowerOffNotes) / sizeof(c_tPowerOffNotes[0])),
+};
+
+void buzzer_task_init(void)
 {
     app_buzzer_init();
-    s_bImuReady = app_imu_init();
-    return s_bImuReady;
 }
 
-void app_peripherals_task(uint32_t wNowMS)
+void buzzer_task(uint32_t wNowMS)
 {
     if (s_bBuzzerTimed && ((int32_t)(wNowMS - s_wBuzzerStopMS) >= 0)) {
         drv_buzzer_stop();
@@ -217,6 +290,38 @@ bool app_buzzer_play_happy_birthday(void)
     return drv_buzzer_score_start(&c_tHappyBirthdayScore);
 }
 
+bool app_buzzer_play_power_key_feedback(bool bLongPress)
+{
+    s_bBuzzerTimed = false;
+    return drv_buzzer_score_start(bLongPress
+                                  ? &c_tPowerKeyLongPressScore
+                                  : &c_tPowerKeyShortPressScore);
+}
+
+bool app_buzzer_play_power_key_double_press_feedback(void)
+{
+    s_bBuzzerTimed = false;
+    return drv_buzzer_score_start(&c_tPowerKeyDoublePressScore);
+}
+
+bool app_buzzer_play_power_keys_together_feedback(void)
+{
+    s_bBuzzerTimed = false;
+    return drv_buzzer_score_start(&c_tPowerKeysTogetherScore);
+}
+
+bool app_buzzer_play_power_on_chime(void)
+{
+    s_bBuzzerTimed = false;
+    return drv_buzzer_score_start(&c_tPowerOnScore);
+}
+
+bool app_buzzer_play_power_off_chime(void)
+{
+    s_bBuzzerTimed = false;
+    return drv_buzzer_score_start(&c_tPowerOffScore);
+}
+
 bool app_buzzer_is_playing(void)
 {
     return drv_buzzer_score_is_active();
@@ -240,107 +345,4 @@ void app_alert_play(app_alert_t tAlert)
     } else if (APP_ALERT_COUNTDOWN_FINISHED_BIRTHDAY == tAlert) {
         (void)app_buzzer_play_happy_birthday();
     }
-}
-
-bool app_imu_init(void)
-{
-    i2c_init(I2C_PORT, QMI8658_I2C_BAUD_HZ);
-    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(I2C_SDA);
-    gpio_pull_up(I2C_SCL);
-
-    s_bImuReady = QMI8658A_Init() != 0;
-    return s_bImuReady;
-}
-
-bool app_imu_read(float fData[6])
-{
-    int16_t hwRawData[6];
-
-    if ((NULL == fData) || !s_bImuReady || !QMI8658A_ReadData(hwRawData)) {
-        return false;
-    }
-
-    QMI8658A_ConvertData(hwRawData, fData, ACCRANGE, GYRRANGE);
-    return true;
-}
-
-void app_button_init(app_button_t *ptButton,
-                     uint8_t chPin,
-                     bool bActiveLow,
-                     uint32_t wDebounceMS)
-{
-    bool bPressed;
-
-    if (NULL == ptButton) {
-        return;
-    }
-
-    gpio_init(chPin);
-    gpio_set_dir(chPin, GPIO_IN);
-    if (bActiveLow) {
-        gpio_pull_up(chPin);
-    } else {
-        gpio_pull_down(chPin);
-    }
-
-    bPressed = (gpio_get(chPin) != 0u);
-    if (bActiveLow) {
-        bPressed = !bPressed;
-    }
-
-    ptButton->chPin = chPin;
-    ptButton->bActiveLow = bActiveLow;
-    ptButton->bPressed = bPressed;
-    ptButton->bCandidatePressed = bPressed;
-    ptButton->bPressLatched = false;
-    ptButton->wCandidateSinceMS = to_ms_since_boot(get_absolute_time());
-    ptButton->wDebounceMS = wDebounceMS;
-}
-
-void app_button_poll(app_button_t *ptButton, uint32_t wNowMS)
-{
-    bool bPressed;
-
-    if (NULL == ptButton) {
-        return;
-    }
-
-    bPressed = (gpio_get(ptButton->chPin) != 0u);
-    if (ptButton->bActiveLow) {
-        bPressed = !bPressed;
-    }
-
-    if (bPressed != ptButton->bCandidatePressed) {
-        ptButton->bCandidatePressed = bPressed;
-        ptButton->wCandidateSinceMS = wNowMS;
-        return;
-    }
-
-    if ((bPressed != ptButton->bPressed) &&
-        ((uint32_t)(wNowMS - ptButton->wCandidateSinceMS) >= ptButton->wDebounceMS)) {
-        ptButton->bPressed = bPressed;
-        if (bPressed) {
-            ptButton->bPressLatched = true;
-        }
-    }
-}
-
-bool app_button_is_pressed(const app_button_t *ptButton)
-{
-    return (NULL != ptButton) && ptButton->bPressed;
-}
-
-bool app_button_was_pressed(app_button_t *ptButton)
-{
-    bool bPressed;
-
-    if (NULL == ptButton) {
-        return false;
-    }
-
-    bPressed = ptButton->bPressLatched;
-    ptButton->bPressLatched = false;
-    return bPressed;
 }

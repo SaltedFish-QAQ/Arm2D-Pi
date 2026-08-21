@@ -2,7 +2,9 @@
 #include "platform/st7789_simple.h"
 #include "arm_2d.h"
 #include "arm_2d_disp_adapter_0.h"
-#include "application/board_peripherals.h"
+#include "application/buzzer_task.h"
+#include "application/power_task.h"
+#include "application/qmi8658c_task.h"
 #include "service-cook-clock/arm_2d_scene_cook_clock.h"
 #include "hardware/sync.h"
 
@@ -112,7 +114,9 @@ int main(void)
 {
     platform_init();
     st7789_set_backlight(false);
-    (void)app_peripherals_init();
+    buzzer_task_init();
+    power_task_init();
+    (void)qmi8658c_init();
     __cook_clock_display_init();
 
     while (arm_fsm_rt_cpl != disp_adapter0_task()) {
@@ -121,7 +125,11 @@ int main(void)
     st7789_set_backlight(true);
 
     while (true) {
-        app_peripherals_task(to_ms_since_boot(get_absolute_time()));
+        uint32_t wNowMS = to_ms_since_boot(get_absolute_time());
+
+        buzzer_task(wNowMS);
+        power_task(wNowMS);
+        qmi8658c_task(wNowMS);
         cook_clock_task();
 #if __COOK_CLOCK_ENABLE_AUTOMATED_TEST__
         __cook_clock_test_task();

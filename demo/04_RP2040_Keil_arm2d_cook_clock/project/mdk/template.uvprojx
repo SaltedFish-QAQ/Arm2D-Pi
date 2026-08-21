@@ -400,14 +400,34 @@
               <FilePath>..\..\service-cook-clock\arm_2d_scene_cook_clock.h</FilePath>
             </File>
             <File>
-              <FileName>board_peripherals.c</FileName>
+              <FileName>buzzer_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\application\board_peripherals.c</FilePath>
+              <FilePath>..\..\application\buzzer_task.c</FilePath>
             </File>
             <File>
-              <FileName>board_peripherals.h</FileName>
+              <FileName>power_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\application\power_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>qmi8658c_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\application\qmi8658c_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>buzzer_task.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\application\board_peripherals.h</FilePath>
+              <FilePath>..\..\application\buzzer_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>power_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\application\power_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>qmi8658c_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\application\qmi8658c_task.h</FilePath>
             </File>
             <File>
               <FileName>bsp_cfg.h</FileName>

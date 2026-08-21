@@ -10,7 +10,7 @@
 #include "arm_2d_helper.h"
 #include "arm_2d_helper_scene.h"
 #include "arm_2d_example_controls.h"
-#include "../../02_RP2040_Keil-arm2d_3d/3d/user_generic_loader_arc.h"
+#include "progress_wheel.h"
 
 #ifdef   __cplusplus
 extern "C" {
@@ -65,13 +65,13 @@ ARM_PRIVATE(
     uint32_t wSecondsRemaining;
     uint32_t wCountdownDuration;
     uint64_t qwCountdownStartTime;
-    uint16_t hwSweepAngleQ10;
+    int16_t iProgress;
     bool bCountdownFinished;
     cook_clock_countdown_finished_effect_t tCountdownFinishedEffect;
     cook_clock_countdown_finished_handler_t fnOnCountdownFinished;
     void *pCountdownFinishedTarget;
     arm_2d_color_rgb565_t tDisplayColour;
-    user_generic_loader_arc_t tCountdownRing;
+    progress_wheel_t tCountdownWheel;
 )
 };
 
