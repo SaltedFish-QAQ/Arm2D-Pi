@@ -185,6 +185,10 @@ static void __on_cook_clock_countdown_finished(
 {
     (void)pTarget;
 
+#if !__COOK_CLOCK_ENABLE_AUTOMATED_TEST__
+    s_chCookClockPreset = 0u;
+#endif
+
     s_tCookClockBacklight.wLastActivityMS =
         to_ms_since_boot(get_absolute_time());
     s_tCookClockBacklight.bDimmed = false;

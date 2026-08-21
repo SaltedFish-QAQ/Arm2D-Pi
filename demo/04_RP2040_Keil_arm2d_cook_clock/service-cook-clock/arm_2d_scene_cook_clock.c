@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <string.h>
 #include "pico/time.h"
+#include "cook_clock_wheel_masks.h"
 
 /*============================ MACROS ========================================*/
 
@@ -15,6 +16,7 @@
 #define COOK_CLOCK_WHEEL_DIAMETER            220
 #define COOK_CLOCK_MICROSECONDS_PER_SECOND    1000000ULL
 #define COOK_CLOCK_FULL_PROGRESS                1000
+#define COOK_CLOCK_MAX_VISIBLE_PROGRESS         (COOK_CLOCK_FULL_PROGRESS - 1)
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
@@ -33,12 +35,49 @@ struct {
     arm_2d_char_idx_t tUTF8Table;
 } ARM_2D_FONT_LiberationSansRegular32_A4;
 
-extern const arm_2d_tile_t c_tileQuaterArcBigMask;
-extern const arm_2d_tile_t c_tileBigWhiteDotMask;
+IMPL_ARM_2D_REGION_LIST(s_tCookClockDirtyRegions, static)
+
+    ADD_LAST_REGION_TO_LIST(s_tCookClockDirtyRegions,
+        .tSize = {
+            .iWidth = 240,
+            .iHeight = 80,
+        },
+    ),
+
+END_IMPL_ARM_2D_REGION_LIST(s_tCookClockDirtyRegions)
 
 static user_scene_cook_clock_t *s_ptCookClock;
 
 /*============================ IMPLEMENTATION ================================*/
+
+static void __request_wheel_clear(user_scene_cook_clock_t *ptThis)
+{
+    this.wSecondsRemaining = 0u;
+    this.iProgress = 0;
+    this.bCountdownTextDirty = true;
+    this.bCountdownFinished = false;
+    this.bCountdownPaused = true;
+    this.chWheelClearFrames = 2u;
+}
+
+static void __initialise_countdown_wheel(user_scene_cook_clock_t *ptThis)
+{
+    progress_wheel_cfg_t tWheelCFG = {
+        .ptileArcMask = &c_tileCookClockWheelArcMask,
+        .ptileDotMask = &c_tileCookClockWheelDotMask,
+        .tWheelColour = this.tDisplayColour.tValue,
+        .tDotColour = GLCD_COLOR_WHITE,
+        .iWheelDiameter = COOK_CLOCK_WHEEL_DIAMETER,
+        .bUseDirtyRegions = true,
+        .u2StartPosition = PROGRESS_WHEEL_START_POSITION_TOP,
+        .u15FullLength = COOK_CLOCK_FULL_PROGRESS,
+    };
+
+    progress_wheel_init(&this.tCountdownWheel,
+                        &this.use_as__arm_2d_scene_t,
+                        &tWheelCFG);
+    progress_wheel_on_load(&this.tCountdownWheel);
+}
 
 static void __on_scene_cook_clock_load(arm_2d_scene_t *ptScene)
 {
@@ -62,7 +101,58 @@ static void __on_scene_cook_clock_frame_start(arm_2d_scene_t *ptScene)
 {
     user_scene_cook_clock_t *ptThis = (user_scene_cook_clock_t *)ptScene;
 
+    if (this.bWheelColourDirty) {
+        this.tDisplayColour = this.tPendingDisplayColour;
+        this.bWheelColourDirty = false;
+        this.bWheelRepaintPending = true;
+        this.bCountdownTextDirty = true;
+    }
+
+    if (this.bWheelRepaintPending) {
+        progress_wheel_depose(&this.tCountdownWheel);
+        __initialise_countdown_wheel(ptThis);
+        this.bWheelRepaintPending = false;
+    }
+
+    arm_2d_dirty_region_item_ignore_set(&s_tCookClockDirtyRegions[0],
+                                        !this.bCountdownTextDirty);
+    this.bCountdownTextDirty = false;
     progress_wheel_on_frame_start(&this.tCountdownWheel);
+}
+
+static void __on_scene_cook_clock_frame_complete(arm_2d_scene_t *ptScene)
+{
+    user_scene_cook_clock_t *ptThis = (user_scene_cook_clock_t *)ptScene;
+
+    if (0u == this.chWheelClearFrames) {
+        return;
+    }
+
+    this.chWheelClearFrames--;
+    if (0u != this.chWheelClearFrames) {
+        return;
+    }
+
+    if (this.bCountdownStartPending) {
+        this.wCountdownDuration = this.wPendingCountdownDuration;
+        this.wSecondsRemaining = this.wPendingCountdownDuration;
+        this.qwCountdownStartTime = time_us_64();
+        this.iProgress = COOK_CLOCK_MAX_VISIBLE_PROGRESS;
+        this.bCountdownStartPending = false;
+        this.bWheelRepaintPending = true;
+        this.bCountdownPaused = false;
+        this.bCountdownTextDirty = true;
+        return;
+    }
+
+    this.bCountdownFinished = true;
+    this.bCountdownPaused = false;
+    this.bCountdownTextDirty = true;
+
+    if (NULL != this.fnOnCountdownFinished) {
+        this.fnOnCountdownFinished(this.tCountdownFinishedEffect,
+                                  this.pCountdownFinishedTarget);
+    }
 }
 
 static
@@ -73,14 +163,14 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cook_clock_handler)
     ARM_2D_PARAM(bIsNewFrame);
 
     arm_2d_canvas(ptTile, __canvas) {
-            if (!this.bCountdownFinished) {
-                progress_wheel_show(&this.tCountdownWheel,
-                            ptTile,
-                            &__canvas,
-                            this.iProgress,
-                            255u,
-                            bIsNewFrame);
-            }
+        if (!this.bCountdownFinished) {
+            progress_wheel_show(&this.tCountdownWheel,
+                                ptTile,
+                                &__canvas,
+                                this.iProgress,
+                                255u,
+                                bIsNewFrame);
+        }
 
         arm_2d_align_centre(__canvas, 240, 80) {
             arm_lcd_text_set_target_framebuffer((arm_2d_tile_t *)ptTile);
@@ -127,6 +217,13 @@ user_scene_cook_clock_t *__arm_2d_scene_cook_clock_init(
     bool bUserAllocated = false;
     assert(NULL != ptDispAdapter);
 
+    arm_2d_region_t tScreen = arm_2d_helper_pfb_get_display_area(
+                                &ptDispAdapter->use_as__arm_2d_helper_pfb_t);
+    arm_2d_align_centre(tScreen,
+                        s_tCookClockDirtyRegions[0].tRegion.tSize) {
+        s_tCookClockDirtyRegions[0].tRegion = __centre_region;
+    }
+
     if (NULL == ptThis) {
         ptThis = (user_scene_cook_clock_t *)
                     __arm_2d_allocate_scratch_memory(
@@ -147,32 +244,27 @@ user_scene_cook_clock_t *__arm_2d_scene_cook_clock_init(
             .tCanvas = {GLCD_COLOR_BLACK},
             .fnOnLoad = &__on_scene_cook_clock_load,
             .fnScene = &__pfb_draw_scene_cook_clock_handler,
+            .ptDirtyRegion = (arm_2d_region_list_item_t *)s_tCookClockDirtyRegions,
             .fnOnFrameStart = &__on_scene_cook_clock_frame_start,
+            .fnOnFrameCPL = &__on_scene_cook_clock_frame_complete,
             .fnDepose = &__on_scene_cook_clock_depose,
+            .bUseDirtyRegionHelper = true,
         },
         .bUserAllocated = bUserAllocated,
         .wSecondsRemaining = 0u,
         .wCountdownDuration = 1u,
+        .wPendingCountdownDuration = 1u,
         .qwCountdownStartTime = time_us_64(),
         .iProgress = 0,
+        .bCountdownTextDirty = true,
         .bCountdownFinished = true,
         .tCountdownFinishedEffect =
             COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT,
         .tDisplayColour = GLCD_COLOR_GREEN,
+        .tPendingDisplayColour = GLCD_COLOR_GREEN,
     };
 
-    progress_wheel_cfg_t tWheelCFG = {
-        .ptileArcMask = &c_tileQuaterArcBigMask,
-        .ptileDotMask = &c_tileBigWhiteDotMask,
-        .tWheelColour = GLCD_COLOR_GREEN,
-        .tDotColour = GLCD_COLOR_WHITE,
-        .iWheelDiameter = COOK_CLOCK_WHEEL_DIAMETER,
-        .u2StartPosition = PROGRESS_WHEEL_START_POSITION_TOP,
-        .u15FullLength = COOK_CLOCK_FULL_PROGRESS,
-    };
-    progress_wheel_init(&this.tCountdownWheel,
-                        &this.use_as__arm_2d_scene_t,
-                        &tWheelCFG);
+    __initialise_countdown_wheel(ptThis);
 
     arm_2d_scene_player_append_scenes(ptDispAdapter,
                                       &this.use_as__arm_2d_scene_t,
@@ -186,20 +278,22 @@ user_scene_cook_clock_t *__arm_2d_scene_cook_clock_init(
 void __arm_2d_scene_cook_clock_set_colour(arm_2d_color_rgb565_t tColour)
 {
     assert(NULL != s_ptCookClock);
-    s_ptCookClock->tDisplayColour = tColour;
-    progress_wheel_set_colour(&s_ptCookClock->tCountdownWheel, tColour.tValue);
+
+    if (s_ptCookClock->tPendingDisplayColour.tValue == tColour.tValue) {
+        return;
+    }
+
+    s_ptCookClock->tPendingDisplayColour = tColour;
+    s_ptCookClock->bWheelColourDirty = true;
 }
 
 void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds)
 {
     assert(NULL != s_ptCookClock);
 
-    s_ptCookClock->wSecondsRemaining = wDurationInSeconds;
-    s_ptCookClock->wCountdownDuration = MAX(1u, wDurationInSeconds);
-    s_ptCookClock->qwCountdownStartTime = time_us_64();
-    s_ptCookClock->iProgress = COOK_CLOCK_FULL_PROGRESS;
-    s_ptCookClock->bCountdownFinished = false;
-    s_ptCookClock->bCountdownPaused = false;
+    s_ptCookClock->wPendingCountdownDuration = MAX(1u, wDurationInSeconds);
+    s_ptCookClock->bCountdownStartPending = true;
+    __request_wheel_clear(s_ptCookClock);
 }
 
 void __arm_2d_scene_cook_clock_toggle_pause(void)
@@ -228,16 +322,8 @@ void __arm_2d_scene_cook_clock_finish_countdown(void)
         return;
     }
 
-    s_ptCookClock->wSecondsRemaining = 0u;
-    s_ptCookClock->iProgress = 0;
-    s_ptCookClock->bCountdownFinished = true;
-    s_ptCookClock->bCountdownPaused = false;
-
-    if (NULL != s_ptCookClock->fnOnCountdownFinished) {
-        s_ptCookClock->fnOnCountdownFinished(
-                                s_ptCookClock->tCountdownFinishedEffect,
-                                s_ptCookClock->pCountdownFinishedTarget);
-    }
+    s_ptCookClock->bCountdownStartPending = false;
+    __request_wheel_clear(s_ptCookClock);
 }
 
 void __arm_2d_scene_cook_clock_set_countdown_finished_effect(
@@ -291,22 +377,22 @@ void __arm_2d_scene_cook_clock_task(void)
               * COOK_CLOCK_FULL_PROGRESS)
              + (qwDurationInMicroseconds / 2u)) /
             qwDurationInMicroseconds);
+        iProgress = MIN(iProgress, COOK_CLOCK_MAX_VISIBLE_PROGRESS);
     }
 
     if ((wSecondsRemaining != s_ptCookClock->wSecondsRemaining) ||
         (iProgress != s_ptCookClock->iProgress)) {
+        bool const bSecondsChanged =
+            (wSecondsRemaining != s_ptCookClock->wSecondsRemaining);
         bool const bCountdownFinished = (0u == wSecondsRemaining) &&
                                       (0u != s_ptCookClock->wSecondsRemaining);
 
         s_ptCookClock->wSecondsRemaining = wSecondsRemaining;
         s_ptCookClock->iProgress = iProgress;
-        s_ptCookClock->bCountdownFinished = bCountdownFinished;
+        s_ptCookClock->bCountdownTextDirty = bSecondsChanged;
 
-        if (bCountdownFinished &&
-            (NULL != s_ptCookClock->fnOnCountdownFinished)) {
-            s_ptCookClock->fnOnCountdownFinished(
-                                    s_ptCookClock->tCountdownFinishedEffect,
-                                    s_ptCookClock->pCountdownFinishedTarget);
+        if (bCountdownFinished) {
+            __request_wheel_clear(s_ptCookClock);
         }
     }
 }

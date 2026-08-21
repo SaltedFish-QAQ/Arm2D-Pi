@@ -70,15 +70,22 @@ ARM_PRIVATE(
     bool bUserAllocated;
     uint32_t wSecondsRemaining;
     uint32_t wCountdownDuration;
+    uint32_t wPendingCountdownDuration;
     uint64_t qwCountdownStartTime;
     int16_t iProgress;
+    bool bCountdownTextDirty;
     bool bCountdownFinished;
     bool bCountdownPaused;
+    uint8_t chWheelClearFrames;
+    bool bCountdownStartPending;
+    bool bWheelColourDirty;
+    bool bWheelRepaintPending;
     uint64_t qwCountdownPausedTime;
     cook_clock_countdown_finished_effect_t tCountdownFinishedEffect;
     cook_clock_countdown_finished_handler_t fnOnCountdownFinished;
     void *pCountdownFinishedTarget;
     arm_2d_color_rgb565_t tDisplayColour;
+    arm_2d_color_rgb565_t tPendingDisplayColour;
     progress_wheel_t tCountdownWheel;
 )
 };

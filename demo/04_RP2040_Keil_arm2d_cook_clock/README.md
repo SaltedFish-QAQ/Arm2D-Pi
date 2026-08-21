@@ -2,6 +2,8 @@
 
 基于 Arm-2D 的 RP2040 Keil 工程，使用 ST7789 屏幕驱动和原生 Arm-2D 显示适配器。
 
+Git 仓库根目录：[../../](../../)
+
 ## 参考来源
 
 - Arm-2D 官方仓库：[ARM-software/Arm-2D](https://github.com/ARM-software/Arm-2D)。
