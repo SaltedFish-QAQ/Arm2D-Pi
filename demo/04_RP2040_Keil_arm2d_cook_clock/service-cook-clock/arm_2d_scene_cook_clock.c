@@ -291,9 +291,13 @@ void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds)
 {
     assert(NULL != s_ptCookClock);
 
-    s_ptCookClock->wPendingCountdownDuration = MAX(1u, wDurationInSeconds);
-    s_ptCookClock->bCountdownStartPending = true;
-    __request_wheel_clear(s_ptCookClock);
+    s_ptCookClock->wCountdownDuration = MAX(1u, wDurationInSeconds);
+    s_ptCookClock->wSecondsRemaining = s_ptCookClock->wCountdownDuration;
+    s_ptCookClock->qwCountdownStartTime = time_us_64();
+    s_ptCookClock->iProgress = COOK_CLOCK_MAX_VISIBLE_PROGRESS;
+    s_ptCookClock->bCountdownTextDirty = true;
+    s_ptCookClock->bCountdownFinished = false;
+    s_ptCookClock->bCountdownPaused = false;
 }
 
 void __arm_2d_scene_cook_clock_toggle_pause(void)
