@@ -1,6 +1,7 @@
 #include "platform/pi_platform.h"
 #include "arm_2d.h"
 #include "arm_2d_disp_adapter_0.h"
+#include "application/board_peripherals.h"
 #include "service-cook-clock/arm_2d_scene_cook_clock.h"
 
 #ifndef __COOK_CLOCK_ENABLE_AUTOMATED_TEST__
@@ -29,6 +30,7 @@ static const cook_clock_test_step_t c_tCookClockTestSteps[] = {
 typedef struct cook_clock_test_t {
     uint64_t qwStepStartTime;
     uint8_t chStep;
+    bool bWaitingForAlert;
 } cook_clock_test_t;
 
 static cook_clock_test_t s_tCookClockTest;
@@ -41,6 +43,7 @@ static void __cook_clock_test_apply_step(cook_clock_test_t *ptThis)
     cook_clock_set_colour(ptStep->tColour);
     cook_clock_set_countdown(ptStep->chDurationInSeconds);
     ptThis->qwStepStartTime = time_us_64();
+    ptThis->bWaitingForAlert = false;
 }
 
 static void __cook_clock_test_init(void)
@@ -55,20 +58,43 @@ static void __cook_clock_test_task(void)
     const cook_clock_test_step_t *ptStep =
         &c_tCookClockTestSteps[ptThis->chStep];
 
-    if ((time_us_64() - ptThis->qwStepStartTime)
-        >= (uint64_t)ptStep->chDurationInSeconds * 1000000ULL) {
+    if (!ptThis->bWaitingForAlert &&
+        ((time_us_64() - ptThis->qwStepStartTime)
+        >= (uint64_t)ptStep->chDurationInSeconds * 1000000ULL)) {
+        ptThis->bWaitingForAlert = true;
+    }
+
+    if (ptThis->bWaitingForAlert && !app_buzzer_is_playing()) {
         ptThis->chStep = (ptThis->chStep + 1u) % dimof(c_tCookClockTestSteps);
         __cook_clock_test_apply_step(ptThis);
     }
 }
 #endif
 
+static void __on_cook_clock_countdown_finished(
+                                cook_clock_countdown_finished_effect_t tEffect,
+                                void *pTarget)
+{
+    (void)pTarget;
+
+    if (COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_BIRTHDAY == tEffect) {
+        (void)app_buzzer_play_happy_birthday();
+    } else {
+        (void)app_buzzer_play_countdown_finished_chime();
+    }
+}
+
 int main(void)
 {
     platform_init();
+    (void)app_peripherals_init();
     arm_2d_init();
     disp_adapter0_init();
     arm_2d_scene_cook_clock_init(&DISP0_ADAPTER);
+    cook_clock_set_countdown_finished_effect(
+                                COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT);
+    cook_clock_set_countdown_finished_handler(
+                                __on_cook_clock_countdown_finished, NULL);
     cook_clock_set_colour(COOK_CLOCK_INITIAL_COLOUR);
     cook_clock_set_countdown(COOK_CLOCK_INITIAL_DURATION_IN_SECONDS);
 
@@ -77,10 +103,11 @@ int main(void)
 #endif
 
     while (true) {
+        app_peripherals_task(to_ms_since_boot(get_absolute_time()));
+        cook_clock_task();
 #if __COOK_CLOCK_ENABLE_AUTOMATED_TEST__
         __cook_clock_test_task();
 #endif
-        cook_clock_task();
         disp_adapter0_task();
     }
 }

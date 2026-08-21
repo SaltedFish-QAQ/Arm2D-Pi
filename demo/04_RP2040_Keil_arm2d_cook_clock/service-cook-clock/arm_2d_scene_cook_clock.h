@@ -35,12 +35,27 @@ extern "C" {
 #define cook_clock_set_countdown(__DURATION_IN_SECONDS)                         \
             __arm_2d_scene_cook_clock_set_countdown((__DURATION_IN_SECONDS))
 
+#define cook_clock_set_countdown_finished_effect(__EFFECT)                      \
+            __arm_2d_scene_cook_clock_set_countdown_finished_effect((__EFFECT))
+
+#define cook_clock_set_countdown_finished_handler(__HANDLER, __TARGET)          \
+            __arm_2d_scene_cook_clock_set_countdown_finished_handler(           \
+                                                    (__HANDLER), (__TARGET))
+
 #define cook_clock_task()                                                        \
             __arm_2d_scene_cook_clock_task()
 
 /*============================ TYPES =========================================*/
 
 typedef struct user_scene_cook_clock_t user_scene_cook_clock_t;
+typedef enum cook_clock_countdown_finished_effect_t {
+    COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT,
+    COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_BIRTHDAY,
+} cook_clock_countdown_finished_effect_t;
+
+typedef void (*cook_clock_countdown_finished_handler_t)(
+                                    cook_clock_countdown_finished_effect_t tEffect,
+                                    void *pTarget);
 
 struct user_scene_cook_clock_t {
     implement(arm_2d_scene_t);
@@ -50,6 +65,11 @@ ARM_PRIVATE(
     uint32_t wSecondsRemaining;
     uint32_t wCountdownDuration;
     uint64_t qwCountdownStartTime;
+    uint16_t hwSweepAngleQ10;
+    bool bCountdownFinished;
+    cook_clock_countdown_finished_effect_t tCountdownFinishedEffect;
+    cook_clock_countdown_finished_handler_t fnOnCountdownFinished;
+    void *pCountdownFinishedTarget;
     arm_2d_color_rgb565_t tDisplayColour;
     user_generic_loader_arc_t tCountdownRing;
 )
@@ -68,6 +88,15 @@ void __arm_2d_scene_cook_clock_set_colour(arm_2d_color_rgb565_t tColour);
 
 extern
 void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds);
+
+extern
+void __arm_2d_scene_cook_clock_set_countdown_finished_effect(
+                                    cook_clock_countdown_finished_effect_t tEffect);
+
+extern
+void __arm_2d_scene_cook_clock_set_countdown_finished_handler(
+                                    cook_clock_countdown_finished_handler_t fnHandler,
+                                    void *pTarget);
 
 extern
 void __arm_2d_scene_cook_clock_task(void);
