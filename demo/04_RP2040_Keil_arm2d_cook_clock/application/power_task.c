@@ -194,11 +194,11 @@ void app_power_key_init(void)
     app_button_init(&s_tLeftButton,
                     POWER_UP_CHECK_PIN,
                     true,
-                    POWER_KEY_DEBOUNCE_MS);
+                    BUTTON_DEBOUNCE_MS);
     app_button_init(&s_tRightButton,
                     RIGHT_BUTTON_PIN,
                     true,
-                    POWER_KEY_DEBOUNCE_MS);
+                    BUTTON_DEBOUNCE_MS);
 
     s_tPowerKey.tState = APP_POWER_KEY_STATE_SOURCE_CHECK;
     s_tPowerKey.wStampMS = to_ms_since_boot(get_absolute_time());

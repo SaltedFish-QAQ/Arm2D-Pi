@@ -183,9 +183,9 @@ static const drv_buzzer_score_t c_tPowerKeyLongPressScore = {
 };
 
 static const drv_buzzer_note_t c_tPowerKeyDoublePressNotes[] = {
-    {1400u, 60u},
+    {800u,  70u},
     {DRV_BUZZER_REST, 40u},
-    {1800u, 60u},
+    {2000u, 80u},
 };
 
 static const drv_buzzer_score_t c_tPowerKeyDoublePressScore = {

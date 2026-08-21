@@ -32,12 +32,16 @@
 #   define POWER_KEY_DEBOUNCE_MS        20u
 #endif
 
+#ifndef BUTTON_DEBOUNCE_MS
+#   define BUTTON_DEBOUNCE_MS           10u
+#endif
+
 #ifndef BUTTON_LONG_PRESS_MS
 #   define BUTTON_LONG_PRESS_MS         1000u
 #endif
 
 #ifndef BUTTON_DOUBLE_PRESS_MS
-#   define BUTTON_DOUBLE_PRESS_MS       300u
+#   define BUTTON_DOUBLE_PRESS_MS       400u
 #endif
 
 #ifndef POWER_KEY_LONG_PRESS_MS

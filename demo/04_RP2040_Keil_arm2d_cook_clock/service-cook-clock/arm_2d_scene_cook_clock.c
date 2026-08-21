@@ -92,14 +92,19 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cook_clock_handler)
                     (const arm_2d_font_t *)&ARM_2D_FONT_LiberationSansRegular32_A4);
                 arm_lcd_printf_label(ARM_2D_ALIGN_CENTRE, "happy birthday");
             } else {
-                arm_lcd_text_force_char_use_same_width(true);
+                    arm_2d_size_t tTextSize;
+
                 arm_lcd_text_set_font(
                     (const arm_2d_font_t *)&ARM_2D_FONT_ALARM_CLOCK_64_A4);
-                arm_lcd_printf_label(ARM_2D_ALIGN_CENTRE,
-                                     "%02lu:%02lu",
-                                     (unsigned long)(this.wSecondsRemaining / 60),
-                                     (unsigned long)(this.wSecondsRemaining % 60));
-                arm_lcd_text_force_char_use_same_width(false);
+                    tTextSize = arm_lcd_printf_to_buffer(
+                        (const arm_2d_font_t *)&ARM_2D_FONT_ALARM_CLOCK_64_A4,
+                        "%02lu:%02lu",
+                        (unsigned long)(this.wSecondsRemaining / 60),
+                        (unsigned long)(this.wSecondsRemaining % 60));
+                    arm_2d_align_centre(__centre_region, tTextSize) {
+                        arm_lcd_text_set_draw_region(&__centre_region);
+                        arm_lcd_printf_buffer(0);
+                    }
             }
             arm_lcd_text_set_target_framebuffer(NULL);
         }
