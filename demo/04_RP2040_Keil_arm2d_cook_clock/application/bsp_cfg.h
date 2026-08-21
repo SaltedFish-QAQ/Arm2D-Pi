@@ -40,12 +40,8 @@
 #   define BUTTON_LONG_PRESS_MS         1000u
 #endif
 
-#ifndef BUTTON_DOUBLE_PRESS_MS
-#   define BUTTON_DOUBLE_PRESS_MS       400u
-#endif
-
 #ifndef POWER_KEY_LONG_PRESS_MS
-#   define POWER_KEY_LONG_PRESS_MS      2000u
+#   define POWER_KEY_LONG_PRESS_MS      1500u
 #endif
 
 #endif

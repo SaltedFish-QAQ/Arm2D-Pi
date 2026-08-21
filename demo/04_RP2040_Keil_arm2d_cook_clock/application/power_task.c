@@ -8,6 +8,7 @@
 #include "pico/stdlib.h"
 
 #define POWER_KEY_POWER_OFF_CHIME_MS                  350u
+#define APP_POWER_KEY_EVENT_NONE                       (-1)
 
 typedef enum app_power_key_state_t {
     APP_POWER_KEY_STATE_SOURCE_CHECK = 0,
@@ -28,8 +29,6 @@ static struct {
 typedef enum app_button_gesture_state_t {
     APP_BUTTON_GESTURE_IDLE = 0,
     APP_BUTTON_GESTURE_FIRST_PRESS,
-    APP_BUTTON_GESTURE_WAIT_SECOND_PRESS,
-    APP_BUTTON_GESTURE_SECOND_PRESS,
     APP_BUTTON_GESTURE_SUPPRESSED,
 } app_button_gesture_state_t;
 
@@ -42,6 +41,7 @@ static app_button_t s_tLeftButton;
 static app_button_t s_tRightButton;
 static app_button_gesture_t s_tButtonGestures[2];
 static bool s_bBothButtonsPressed;
+static bool s_bPowerKeyActive;
 static uint8_t s_chPowerKeyEvents;
 
 static bool app_power_key_is_pressed(void)
@@ -58,13 +58,8 @@ static void __power_key_emit_event(app_power_key_event_t tEvent)
     case APP_POWER_KEY_EVENT_RIGHT_SHORT_PRESS:
         (void)app_buzzer_play_power_key_feedback(false);
         break;
-    case APP_POWER_KEY_EVENT_LEFT_LONG_PRESS:
     case APP_POWER_KEY_EVENT_RIGHT_LONG_PRESS:
         (void)app_buzzer_play_power_key_feedback(true);
-        break;
-    case APP_POWER_KEY_EVENT_LEFT_DOUBLE_PRESS:
-    case APP_POWER_KEY_EVENT_RIGHT_DOUBLE_PRESS:
-        (void)app_buzzer_play_power_key_double_press_feedback();
         break;
     case APP_POWER_KEY_EVENT_BOTH_PRESSED:
         (void)app_buzzer_play_power_keys_together_feedback();
@@ -77,12 +72,15 @@ static void __power_key_emit_event(app_power_key_event_t tEvent)
 static void __power_key_gesture_task(app_button_t *ptButton,
                                      app_button_gesture_t *ptGesture,
                                      app_power_key_event_t tShortEvent,
-                                     app_power_key_event_t tLongEvent,
-                                     app_power_key_event_t tDoubleEvent,
+                                     int8_t chLongEvent,
                                      uint32_t wNowMS)
 {
     bool const bPressed = app_button_was_pressed(ptButton);
     bool const bReleased = app_button_was_released(ptButton);
+
+    if (bPressed) {
+        s_bPowerKeyActive = true;
+    }
 
     if (APP_BUTTON_GESTURE_SUPPRESSED == ptGesture->tState) {
         if (bReleased) {
@@ -102,37 +100,12 @@ static void __power_key_gesture_task(app_button_t *ptButton,
     case APP_BUTTON_GESTURE_FIRST_PRESS:
         if (app_button_is_pressed(ptButton) &&
             ((uint32_t)(wNowMS - ptGesture->wStampMS) >= BUTTON_LONG_PRESS_MS)) {
-            __power_key_emit_event(tLongEvent);
-            ptGesture->tState = APP_BUTTON_GESTURE_SUPPRESSED;
-        } else if (bReleased) {
-            ptGesture->wStampMS = wNowMS;
-            ptGesture->tState = APP_BUTTON_GESTURE_WAIT_SECOND_PRESS;
-        }
-        break;
-
-    case APP_BUTTON_GESTURE_WAIT_SECOND_PRESS:
-        if (bPressed) {
-            if ((uint32_t)(wNowMS - ptGesture->wStampMS) <= BUTTON_DOUBLE_PRESS_MS) {
-                ptGesture->wStampMS = wNowMS;
-                ptGesture->tState = APP_BUTTON_GESTURE_SECOND_PRESS;
-            } else {
-                __power_key_emit_event(tShortEvent);
-                ptGesture->wStampMS = wNowMS;
-                ptGesture->tState = APP_BUTTON_GESTURE_FIRST_PRESS;
+            if (APP_POWER_KEY_EVENT_NONE != chLongEvent) {
+                __power_key_emit_event((app_power_key_event_t)chLongEvent);
             }
-        } else if ((uint32_t)(wNowMS - ptGesture->wStampMS) >= BUTTON_DOUBLE_PRESS_MS) {
-            __power_key_emit_event(tShortEvent);
-            ptGesture->tState = APP_BUTTON_GESTURE_IDLE;
-        }
-        break;
-
-    case APP_BUTTON_GESTURE_SECOND_PRESS:
-        if (app_button_is_pressed(ptButton) &&
-            ((uint32_t)(wNowMS - ptGesture->wStampMS) >= BUTTON_LONG_PRESS_MS)) {
-            __power_key_emit_event(tLongEvent);
             ptGesture->tState = APP_BUTTON_GESTURE_SUPPRESSED;
         } else if (bReleased) {
-            __power_key_emit_event(tDoubleEvent);
+            __power_key_emit_event(tShortEvent);
             ptGesture->tState = APP_BUTTON_GESTURE_IDLE;
         }
         break;
@@ -165,14 +138,12 @@ void power_task(uint32_t wNowMS)
     __power_key_gesture_task(&s_tLeftButton,
                              &s_tButtonGestures[0],
                              APP_POWER_KEY_EVENT_LEFT_SHORT_PRESS,
-                             APP_POWER_KEY_EVENT_LEFT_LONG_PRESS,
-                             APP_POWER_KEY_EVENT_LEFT_DOUBLE_PRESS,
+                             APP_POWER_KEY_EVENT_NONE,
                              wNowMS);
     __power_key_gesture_task(&s_tRightButton,
                              &s_tButtonGestures[1],
                              APP_POWER_KEY_EVENT_RIGHT_SHORT_PRESS,
                              APP_POWER_KEY_EVENT_RIGHT_LONG_PRESS,
-                             APP_POWER_KEY_EVENT_RIGHT_DOUBLE_PRESS,
                              wNowMS);
 
     app_power_key_task(wNowMS);
@@ -210,6 +181,7 @@ void app_power_key_init(void)
                                 ? APP_BUTTON_GESTURE_SUPPRESSED
                                 : APP_BUTTON_GESTURE_IDLE;
     s_bBothButtonsPressed = false;
+    s_bPowerKeyActive = false;
     s_chPowerKeyEvents = 0u;
 }
 
@@ -431,4 +403,12 @@ bool app_power_key_was_event(app_power_key_event_t tEvent)
 
     s_chPowerKeyEvents &= (uint8_t)~chEventMask;
     return bEventPending;
+}
+
+bool app_power_key_was_active(void)
+{
+    bool const bActive = s_bPowerKeyActive;
+
+    s_bPowerKeyActive = false;
+    return bActive;
 }

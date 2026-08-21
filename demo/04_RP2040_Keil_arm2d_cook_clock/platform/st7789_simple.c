@@ -24,8 +24,7 @@
 #include "hardware/gpio.h"
 #include "hardware/clocks.h"
 #include "hardware/dma.h"
-#include "hardware/gpio.h"
-#include "hardware/pio.h"
+#include "hardware/pwm.h"
 
 #include "st77xx_parallel_byte.pio.h"
 #include "st77xx_parallel_stream.pio.h"
@@ -65,6 +64,8 @@
 #ifndef ST7789_PIO_CLKDIV
 #   define ST7789_PIO_CLKDIV    3
 #endif
+
+#define ST7789_BACKLIGHT_PWM_TOP    999u
 
 #define DATA_PIN_MASK   (0xFFu << ST7789_PIN_D0)
 
@@ -190,14 +191,24 @@ __STATIC_INLINE
 void bl_on(void) 
 {   
     if (ST7789_PIN_BL  >= 0) {
-        gpio_put(ST7789_PIN_BL, 1); 
+        st7789_set_backlight_brightness(100u);
     }
 }
 
 void st7789_set_backlight(bool bEnabled)
 {
+    st7789_set_backlight_brightness(bEnabled ? 100u : 0u);
+}
+
+void st7789_set_backlight_brightness(uint8_t chPercent)
+{
     if (ST7789_PIN_BL >= 0) {
-        gpio_put(ST7789_PIN_BL, bEnabled ? 1 : 0);
+        if (chPercent > 100u) {
+            chPercent = 100u;
+        }
+        pwm_set_gpio_level(ST7789_PIN_BL,
+                           ((uint32_t)chPercent
+                            * (ST7789_BACKLIGHT_PWM_TOP + 1u)) / 100u);
     }
 }
 
@@ -452,10 +463,13 @@ void st7789_init(void)
     }
 
     if (ST7789_PIN_BL  >= 0) {
-        gpio_init(ST7789_PIN_BL);
-        gpio_set_function(ST7789_PIN_BL, GPIO_FUNC_SIO); 
-        gpio_set_dir(ST7789_PIN_BL, GPIO_OUT); 
-        gpio_put(ST7789_PIN_BL, 0); 
+        uint const tBacklightPwmSlice = pwm_gpio_to_slice_num(ST7789_PIN_BL);
+        pwm_config tBacklightPwmConfig = pwm_get_default_config();
+
+        gpio_set_function(ST7789_PIN_BL, GPIO_FUNC_PWM);
+        pwm_config_set_wrap(&tBacklightPwmConfig, ST7789_BACKLIGHT_PWM_TOP);
+        pwm_init(tBacklightPwmSlice, &tBacklightPwmConfig, true);
+        st7789_set_backlight_brightness(0u);
     }
     for (int i = 0; i < 8; ++i) {
         gpio_init(ST7789_PIN_D0 + i);

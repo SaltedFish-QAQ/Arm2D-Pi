@@ -73,39 +73,44 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cook_clock_handler)
     ARM_2D_PARAM(bIsNewFrame);
 
     arm_2d_canvas(ptTile, __canvas) {
-        progress_wheel_show(&this.tCountdownWheel,
-                    ptTile,
-                    &__canvas,
-                    this.iProgress,
-                    255u,
-                    bIsNewFrame);
+            if (!this.bCountdownFinished) {
+                progress_wheel_show(&this.tCountdownWheel,
+                            ptTile,
+                            &__canvas,
+                            this.iProgress,
+                            255u,
+                            bIsNewFrame);
+            }
 
         arm_2d_align_centre(__canvas, 240, 80) {
             arm_lcd_text_set_target_framebuffer((arm_2d_tile_t *)ptTile);
             arm_lcd_text_set_draw_region(&__centre_region);
             arm_lcd_text_set_colour(this.tDisplayColour.tValue,
                                     GLCD_COLOR_BLACK);
-            if (this.bCountdownFinished &&
-                (COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_BIRTHDAY ==
-                 this.tCountdownFinishedEffect)) {
-                arm_lcd_text_set_font(
-                    (const arm_2d_font_t *)&ARM_2D_FONT_LiberationSansRegular32_A4);
-                arm_lcd_printf_label(ARM_2D_ALIGN_CENTRE, "happy birthday");
-            } else {
-                    arm_2d_size_t tTextSize;
+                if (this.bCountdownFinished &&
+                    (COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_BIRTHDAY ==
+                     this.tCountdownFinishedEffect)) {
+                    arm_lcd_text_set_font(
+                        (const arm_2d_font_t *)&ARM_2D_FONT_LiberationSansRegular32_A4);
+                    arm_lcd_printf_label(ARM_2D_ALIGN_CENTRE, "happy birthday");
+                } else {
+                arm_2d_size_t tTextSize;
 
                 arm_lcd_text_set_font(
                     (const arm_2d_font_t *)&ARM_2D_FONT_ALARM_CLOCK_64_A4);
-                    tTextSize = arm_lcd_printf_to_buffer(
+                tTextSize = arm_lcd_get_string_line_box(
+                    "00:00", (const arm_2d_font_t *)&ARM_2D_FONT_ALARM_CLOCK_64_A4);
+                arm_2d_align_centre(__centre_region, tTextSize) {
+                    arm_lcd_text_set_draw_region(&__centre_region);
+                    (void)arm_lcd_printf_to_buffer(
                         (const arm_2d_font_t *)&ARM_2D_FONT_ALARM_CLOCK_64_A4,
                         "%02lu:%02lu",
                         (unsigned long)(this.wSecondsRemaining / 60),
                         (unsigned long)(this.wSecondsRemaining % 60));
-                    arm_2d_align_centre(__centre_region, tTextSize) {
-                        arm_lcd_text_set_draw_region(&__centre_region);
-                        arm_lcd_printf_buffer(0);
-                    }
+                    arm_lcd_printf_buffer(0);
+                }
             }
+
             arm_lcd_text_set_target_framebuffer(NULL);
         }
     }
@@ -146,10 +151,11 @@ user_scene_cook_clock_t *__arm_2d_scene_cook_clock_init(
             .fnDepose = &__on_scene_cook_clock_depose,
         },
         .bUserAllocated = bUserAllocated,
-        .wSecondsRemaining = COOK_CLOCK_COUNTDOWN_SECONDS,
-        .wCountdownDuration = COOK_CLOCK_COUNTDOWN_SECONDS,
+        .wSecondsRemaining = 0u,
+        .wCountdownDuration = 1u,
         .qwCountdownStartTime = time_us_64(),
-        .iProgress = COOK_CLOCK_FULL_PROGRESS,
+        .iProgress = 0,
+        .bCountdownFinished = true,
         .tCountdownFinishedEffect =
             COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT,
         .tDisplayColour = GLCD_COLOR_GREEN,
@@ -181,6 +187,7 @@ void __arm_2d_scene_cook_clock_set_colour(arm_2d_color_rgb565_t tColour)
 {
     assert(NULL != s_ptCookClock);
     s_ptCookClock->tDisplayColour = tColour;
+    progress_wheel_set_colour(&s_ptCookClock->tCountdownWheel, tColour.tValue);
 }
 
 void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds)
@@ -192,6 +199,45 @@ void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds)
     s_ptCookClock->qwCountdownStartTime = time_us_64();
     s_ptCookClock->iProgress = COOK_CLOCK_FULL_PROGRESS;
     s_ptCookClock->bCountdownFinished = false;
+    s_ptCookClock->bCountdownPaused = false;
+}
+
+void __arm_2d_scene_cook_clock_toggle_pause(void)
+{
+    assert(NULL != s_ptCookClock);
+
+    if (s_ptCookClock->bCountdownFinished) {
+        return;
+    }
+
+    if (s_ptCookClock->bCountdownPaused) {
+        s_ptCookClock->qwCountdownStartTime += time_us_64()
+                                             - s_ptCookClock->qwCountdownPausedTime;
+        s_ptCookClock->bCountdownPaused = false;
+    } else {
+        s_ptCookClock->qwCountdownPausedTime = time_us_64();
+        s_ptCookClock->bCountdownPaused = true;
+    }
+}
+
+void __arm_2d_scene_cook_clock_finish_countdown(void)
+{
+    assert(NULL != s_ptCookClock);
+
+    if (s_ptCookClock->bCountdownFinished) {
+        return;
+    }
+
+    s_ptCookClock->wSecondsRemaining = 0u;
+    s_ptCookClock->iProgress = 0;
+    s_ptCookClock->bCountdownFinished = true;
+    s_ptCookClock->bCountdownPaused = false;
+
+    if (NULL != s_ptCookClock->fnOnCountdownFinished) {
+        s_ptCookClock->fnOnCountdownFinished(
+                                s_ptCookClock->tCountdownFinishedEffect,
+                                s_ptCookClock->pCountdownFinishedTarget);
+    }
 }
 
 void __arm_2d_scene_cook_clock_set_countdown_finished_effect(
@@ -219,6 +265,11 @@ void __arm_2d_scene_cook_clock_set_countdown_finished_handler(
 void __arm_2d_scene_cook_clock_task(void)
 {
     assert(NULL != s_ptCookClock);
+
+    if (s_ptCookClock->bCountdownPaused ||
+        s_ptCookClock->bCountdownFinished) {
+        return;
+    }
 
     uint64_t qwElapsedInMicroseconds =
         time_us_64() - s_ptCookClock->qwCountdownStartTime;

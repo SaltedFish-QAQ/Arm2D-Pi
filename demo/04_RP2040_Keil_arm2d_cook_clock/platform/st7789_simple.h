@@ -39,6 +39,7 @@ extern "C" {
 
 void st7789_init(void);
 void st7789_set_backlight(bool bEnabled);
+void st7789_set_backlight_brightness(uint8_t chPercent);
 void st7789_draw_bitmap( int16_t x, 
                         int16_t y, 
                         int16_t width, 

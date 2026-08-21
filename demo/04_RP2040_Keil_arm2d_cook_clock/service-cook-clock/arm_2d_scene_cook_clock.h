@@ -35,6 +35,12 @@ extern "C" {
 #define cook_clock_set_countdown(__DURATION_IN_SECONDS)                         \
             __arm_2d_scene_cook_clock_set_countdown((__DURATION_IN_SECONDS))
 
+#define cook_clock_toggle_pause()                                                \
+            __arm_2d_scene_cook_clock_toggle_pause()
+
+#define cook_clock_finish_countdown()                                            \
+            __arm_2d_scene_cook_clock_finish_countdown()
+
 #define cook_clock_set_countdown_finished_effect(__EFFECT)                      \
             __arm_2d_scene_cook_clock_set_countdown_finished_effect((__EFFECT))
 
@@ -67,6 +73,8 @@ ARM_PRIVATE(
     uint64_t qwCountdownStartTime;
     int16_t iProgress;
     bool bCountdownFinished;
+    bool bCountdownPaused;
+    uint64_t qwCountdownPausedTime;
     cook_clock_countdown_finished_effect_t tCountdownFinishedEffect;
     cook_clock_countdown_finished_handler_t fnOnCountdownFinished;
     void *pCountdownFinishedTarget;
@@ -88,6 +96,12 @@ void __arm_2d_scene_cook_clock_set_colour(arm_2d_color_rgb565_t tColour);
 
 extern
 void __arm_2d_scene_cook_clock_set_countdown(uint32_t wDurationInSeconds);
+
+extern
+void __arm_2d_scene_cook_clock_toggle_pause(void);
+
+extern
+void __arm_2d_scene_cook_clock_finish_countdown(void);
 
 extern
 void __arm_2d_scene_cook_clock_set_countdown_finished_effect(
