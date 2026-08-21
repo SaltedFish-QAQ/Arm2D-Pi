@@ -1,11 +1,13 @@
 #include "platform/pi_platform.h"
+#include "platform/st7789_simple.h"
 #include "arm_2d.h"
 #include "arm_2d_disp_adapter_0.h"
 #include "application/board_peripherals.h"
 #include "service-cook-clock/arm_2d_scene_cook_clock.h"
+#include "hardware/sync.h"
 
 #ifndef __COOK_CLOCK_ENABLE_AUTOMATED_TEST__
-#   define __COOK_CLOCK_ENABLE_AUTOMATED_TEST__     1
+#   define __COOK_CLOCK_ENABLE_AUTOMATED_TEST__     0
 #endif
 
 #define COOK_CLOCK_INITIAL_DURATION_IN_SECONDS       (5u * 60u)
@@ -84,13 +86,16 @@ static void __on_cook_clock_countdown_finished(
     }
 }
 
-int main(void)
+static void __cook_clock_display_init(void)
 {
-    platform_init();
-    (void)app_peripherals_init();
-    arm_2d_init();
+    arm_irq_safe {
+        arm_2d_init();
+    }
+
     disp_adapter0_init();
     arm_2d_scene_cook_clock_init(&DISP0_ADAPTER);
+    // COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_BIRTHDAY
+    // COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT
     cook_clock_set_countdown_finished_effect(
                                 COOK_CLOCK_COUNTDOWN_FINISHED_EFFECT_DEFAULT);
     cook_clock_set_countdown_finished_handler(
@@ -101,6 +106,19 @@ int main(void)
 #if __COOK_CLOCK_ENABLE_AUTOMATED_TEST__
     __cook_clock_test_init();
 #endif
+}
+
+int main(void)
+{
+    platform_init();
+    st7789_set_backlight(false);
+    (void)app_peripherals_init();
+    __cook_clock_display_init();
+
+    while (arm_fsm_rt_cpl != disp_adapter0_task()) {
+    }
+
+    st7789_set_backlight(true);
 
     while (true) {
         app_peripherals_task(to_ms_since_boot(get_absolute_time()));

@@ -194,6 +194,13 @@ void bl_on(void)
     }
 }
 
+void st7789_set_backlight(bool bEnabled)
+{
+    if (ST7789_PIN_BL >= 0) {
+        gpio_put(ST7789_PIN_BL, bEnabled ? 1 : 0);
+    }
+}
+
 void irq_clear_pending(uint num) {
     check_irq_param(num);
     *((io_rw_32 *) (PPB_BASE + M0PLUS_NVIC_ICPR_OFFSET)) = 1u << num;
@@ -559,7 +566,6 @@ void st7789_init(void)
     sleep_ms(20);
 
     st7789_clear_before_backlight();
-    bl_on();
 }
 
 
