@@ -41,6 +41,9 @@ extern "C" {
 #define cook_clock_finish_countdown()                                            \
             __arm_2d_scene_cook_clock_finish_countdown()
 
+#define cook_clock_is_countdown_active()                                        \
+            __arm_2d_scene_cook_clock_is_countdown_active()
+
 #define cook_clock_set_countdown_finished_effect(__EFFECT)                      \
             __arm_2d_scene_cook_clock_set_countdown_finished_effect((__EFFECT))
 
@@ -109,6 +112,9 @@ void __arm_2d_scene_cook_clock_toggle_pause(void);
 
 extern
 void __arm_2d_scene_cook_clock_finish_countdown(void);
+
+extern
+bool __arm_2d_scene_cook_clock_is_countdown_active(void);
 
 extern
 void __arm_2d_scene_cook_clock_set_countdown_finished_effect(

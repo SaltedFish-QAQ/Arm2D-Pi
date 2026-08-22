@@ -330,6 +330,13 @@ void __arm_2d_scene_cook_clock_finish_countdown(void)
     __request_wheel_clear(s_ptCookClock);
 }
 
+bool __arm_2d_scene_cook_clock_is_countdown_active(void)
+{
+    assert(NULL != s_ptCookClock);
+
+    return !s_ptCookClock->bCountdownFinished;
+}
+
 void __arm_2d_scene_cook_clock_set_countdown_finished_effect(
                                     cook_clock_countdown_finished_effect_t tEffect)
 {

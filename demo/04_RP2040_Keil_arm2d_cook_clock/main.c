@@ -245,6 +245,10 @@ int main(void)
         uint32_t wNowMS = to_ms_since_boot(get_absolute_time());
 
         buzzer_task(wNowMS);
+    #if !__COOK_CLOCK_ENABLE_AUTOMATED_TEST__
+        app_power_key_set_right_long_press_feedback_enabled(
+                        !cook_clock_is_countdown_active());
+    #endif
         power_task(wNowMS);
         __cook_clock_backlight_task(wNowMS);
     #if __COOK_CLOCK_ENABLE_IMU__

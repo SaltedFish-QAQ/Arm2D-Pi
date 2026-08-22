@@ -40,6 +40,7 @@ bool app_button_was_long_pressed(app_button_t *ptButton);
 bool app_power_keys_were_pressed_together(void);
 bool app_power_key_was_event(app_power_key_event_t tEvent);
 bool app_power_key_was_active(void);
+void app_power_key_set_right_long_press_feedback_enabled(bool bEnabled);
 void app_power_key_init(void);
 void app_power_key_task(uint32_t wNowMS);
 

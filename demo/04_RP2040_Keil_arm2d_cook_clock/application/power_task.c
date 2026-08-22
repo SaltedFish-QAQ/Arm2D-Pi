@@ -42,6 +42,7 @@ static app_button_t s_tRightButton;
 static app_button_gesture_t s_tButtonGestures[2];
 static bool s_bBothButtonsPressed;
 static bool s_bPowerKeyActive;
+static bool s_bRightLongPressFeedbackEnabled;
 static uint8_t s_chPowerKeyEvents;
 
 static bool app_power_key_is_pressed(void)
@@ -59,7 +60,9 @@ static void __power_key_emit_event(app_power_key_event_t tEvent)
         (void)app_buzzer_play_power_key_feedback(false);
         break;
     case APP_POWER_KEY_EVENT_RIGHT_LONG_PRESS:
-        (void)app_buzzer_play_power_key_feedback(true);
+        if (s_bRightLongPressFeedbackEnabled) {
+            (void)app_buzzer_play_power_key_feedback(true);
+        }
         break;
     case APP_POWER_KEY_EVENT_BOTH_PRESSED:
         (void)app_buzzer_play_power_keys_together_feedback();
@@ -182,7 +185,13 @@ void app_power_key_init(void)
                                 : APP_BUTTON_GESTURE_IDLE;
     s_bBothButtonsPressed = false;
     s_bPowerKeyActive = false;
+    s_bRightLongPressFeedbackEnabled = true;
     s_chPowerKeyEvents = 0u;
+}
+
+void app_power_key_set_right_long_press_feedback_enabled(bool bEnabled)
+{
+    s_bRightLongPressFeedbackEnabled = bEnabled;
 }
 
 void app_power_key_task(uint32_t wNowMS)
